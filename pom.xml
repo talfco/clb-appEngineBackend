@@ -8,13 +8,12 @@
         <appengine.target.version>1.8.7</appengine.target.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
-    <repositories>
-        <repository>  
-            <id>cloudburo-clb-test-repo</id>  
-            <name>Cloudburo on GitHub</name>  
-            <url>http://talfco.github.io/clb-test/repository</url>   
-        </repository>
-    </repositories>
+    <distributionManagement>  
+  		<repository>    
+  			<id>gh-pages</id>    
+  			<url>file:///${basedir}/../clb-test-pages/repository/</url>  
+  		</repository>
+  	</distributionManagement>
     <dependencies>
         <!-- Compile/runtime dependencies -->
         <dependency>
@@ -49,12 +48,6 @@
 			<version>2.3</version>
 		</dependency>  
         <!-- Test Dependencies -->
-        <dependency>
-		    <groupId>com.cloudburo</groupId>
-		    <artifactId>clb-test</artifactId>
-		    <version>1.0.0-SNAPSHOT</version>
-		    <scope>test</scope>
-		</dependency> 
         <dependency>
             <groupId>com.google.appengine</groupId>
             <artifactId>appengine-testing</artifactId>
