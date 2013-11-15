@@ -1,6 +1,6 @@
 ##App Engine Java Interface for a REST Backend
 
-This is utility library for a Google App Engine Java REST backend.
+This is a utility library for a Google App Engine Java REST backend.
 
 
 
