@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <metadata>
-  <groupId>com.ubs.cloudburo</groupId>
+  <groupId>com.cloudburo</groupId>
   <artifactId>clb-appEngineBackend</artifactId>
   <versioning>
     <versions>
       <version>0.0.1-SNAPSHOT</version>
     </versions>
-    <lastUpdated>20131115233146</lastUpdated>
+    <lastUpdated>20131115234209</lastUpdated>
   </versioning>
 </metadata>
