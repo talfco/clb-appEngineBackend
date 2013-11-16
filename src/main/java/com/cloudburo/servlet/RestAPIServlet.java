@@ -71,10 +71,10 @@ public abstract class RestAPIServlet extends HttpServlet {
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException, ServletException {
 		logger.log(Level.FINER, "Call with following path {0}", req.getPathInfo());
-		logger.log(Level.FINER, "Field parameter {0}", fields);
-		logger.log(Level.FINER, "Filter parameter {0}", filter);
 		fields= req.getParameter("fields");
 		filter= req.getParameter("filter");
+		logger.log(Level.INFO, "Field parameter {0}", fields);
+		logger.log(Level.INFO, "Filter parameter {0}", filter);
 		logger.log(Level.INFO, "Going to fetch {0} objects", getPersistencyClass().getName());
 		if (req.getPathInfo() == null || req.getPathInfo().length()==1) {
 			getCollection(getPersistencyClass(),req,resp);
@@ -111,26 +111,49 @@ public abstract class RestAPIServlet extends HttpServlet {
 		ofy().delete().key(objectKey).now();
 	}
 	
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@SuppressWarnings({ "unchecked", "rawtypes", "static-access" })
 	private void getCollection(Class clazz, HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		StringBuffer buf = new StringBuffer("[");
 		Query<?> query = ofy().load().type(clazz).limit(sResponseLimit);
 		String cursorStr = req.getParameter("cursor");
-		if (cursorStr != null)
+		if (cursorStr != null) 
 			query = query.startAt(Cursor.fromWebSafeString(cursorStr));
 		int nrRec = 0;
 		QueryResultIterator<?> iterator = query.iterator();
 		Collection collection = new ArrayList();		
 		while (iterator.hasNext()) {
 			nrRec++;
-			collection.add(iterator.next());
+			if (fields == null || fields.equals("")) {
+				collection.add(iterator.next());
+			} else {
+				Object obj = iterator.next();
+				try {
+					buf.append(partialResponse(fields,obj));
+				    buf.append(",");
+				} catch (Exception e) {
+					resp.sendError(resp.SC_BAD_REQUEST);
+					resp.getWriter().print(errorMsg(e.getMessage(),"0","0"));
+					return;
+					// This shouldn't happen at all IllegalAccessException
+				}
+			}
 		}
+
+		resp.setContentType("application/json");
 		String cursor="";
 		if (nrRec==sResponseLimit) {
 			cursor = iterator.getCursor().toWebSafeString();
 		}
-		collection.add(new MetaRecord(cursor));
-		resp.setContentType("application/json");
-		resp.getWriter().print((new GsonWrapper()).getGson().toJson(collection));
+		MetaRecord metaObj = new MetaRecord(cursor); 
+		if (fields == null || fields.equals("")) {
+			collection.add(metaObj);
+			resp.getWriter().print((new GsonWrapper()).getGson().toJson(collection));
+		} else {
+			buf.append((new GsonWrapper()).getGson().toJson(metaObj));
+			buf.append("]");
+			resp.getWriter().print(buf.toString());
+		}
+		
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked", "static-access" })
@@ -172,7 +195,7 @@ public abstract class RestAPIServlet extends HttpServlet {
 		return buf.toString();
 	}
 	
-	private String partialResponse(String filterList, Object elem) throws Exception {
+	private String partialResponse(String filterList, Object elem) throws Exception  {
 		Vector<String> fieldVec = new Vector<String>();
 		StringTokenizer tok = new StringTokenizer(filterList,",");
 		while (tok.hasMoreTokens()) fieldVec.add(tok.nextToken());
@@ -184,7 +207,7 @@ public abstract class RestAPIServlet extends HttpServlet {
 				Object value = fields[i].get(elem);
 				buf.append("\""+fields[i].getName()+"\""+":"+(new GsonWrapper()).getGson().toJson(value));
 				buf.append(",\n");
-			}
+			} 
 		}
 		buf.replace(buf.length()-2, buf.length()-1, "");
 		buf.append("}");
