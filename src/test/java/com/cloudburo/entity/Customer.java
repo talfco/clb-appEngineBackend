@@ -19,17 +19,17 @@ package com.cloudburo.entity;
 
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
+import com.googlecode.objectify.annotation.Index;
 
 import java.util.Date;
-
 import org.joda.time.LocalDateTime;
 
 @Entity
 public class Customer {
 	@Id public Long _id;
-	public String name;
-	public String surname;
-	public String email;
+	@Index public String name;
+	@Index public String surname;
+	@Index public String email;
 	public String address;
 	public String plz;
 	public String location;

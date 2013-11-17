@@ -137,8 +137,8 @@ public class CustomerServletTest {
 	    customerIn.address = "Address2"; 
 	    persistTestRecord(customerIn);
 	    customerIn.name = "Name3";
-	    customerIn.surname = "Surname3";
-	    customerIn.address = "Address3"; 
+	    customerIn.surname = "Surname1";
+	    customerIn.address = "Address1"; 
 	    persistTestRecord(customerIn);
 	    customerIn.name = "Name4";
 	    customerIn.surname = "Surname4";
@@ -175,6 +175,50 @@ public class CustomerServletTest {
 	    assertEquals("Checking that there is a 'name' field ","Name1",elem.get("name").getAsString());
 	    assertEquals("Checking that there is no 'surname' field ",null,elem.get("surname"));
 	    
+	    // TEST: Filter Parameter for Collection
+	    hash = new Hashtable<String, String>();
+		hash.put("filter", "surname:Surname1");
+		array = getTestCollection(hash);
+	    assertEquals("Checking received numbers of JSON Elements (2 record and 1 meta)", 3,array.size());
+	    elem  = array.get(array.size()-1).getAsJsonObject();
+	    assertEquals("Checking that there is a  empty 'cursor' element","",elem.get("_cursor").getAsString());
+	    elem  = array.get(0).getAsJsonObject();
+	    assertEquals("Checking  the surname attribute","Surname1",elem.get("surname").getAsString());
+	    elem  = array.get(1).getAsJsonObject();
+	    assertEquals("Checking the surname attribute","Surname1",elem.get("surname").getAsString());	
+	    
+	    hash = new Hashtable<String, String>();
+		hash.put("filter", "surname:Surname1,name:Name1");
+		array = getTestCollection(hash);
+	    assertEquals("Checking received numbers of JSON Elements (1 record and 1 meta)", 2,array.size());
+	    elem  = array.get(array.size()-1).getAsJsonObject();
+	    assertEquals("Checking that there is a  empty 'cursor' element","",elem.get("_cursor").getAsString());
+	    elem  = array.get(0).getAsJsonObject();
+	    assertEquals("Checking  the surname attribute","Surname1",elem.get("surname").getAsString());
+	    elem  = array.get(0).getAsJsonObject();
+	    assertEquals("Checking the surname attribute","Name1",elem.get("name").getAsString());	
+	    
+	    CustomerServlet.setResponseResultSize(5);
+	    hash = new Hashtable<String, String>();
+		hash.put("filter", "surname:Surname,_option:like");	 
+		array = getTestCollection(hash);
+		assertEquals("Checking received numbers of JSON Elements (4 record and 1 meta)", 5,array.size());
+		
+		// TEST: Set Parameter of Collection
+		elem  = array.get(0).getAsJsonObject();
+		String setValues = "";
+		setValues = setValues + elem.get("_id").getAsString() + ",";
+		elem  = array.get(1).getAsJsonObject();
+		setValues= setValues + elem.get("_id").getAsString() + ",";
+		elem  = array.get(2).getAsJsonObject();	
+		setValues = setValues + elem.get("_id").getAsString();
+	    hash = new Hashtable<String, String>();
+		hash.put("set", setValues);	 	
+		array = getTestCollection(hash);
+		assertEquals("Checking received numbers of JSON Elements (3 record )", 3,array.size());
+		
+		CustomerServlet.setResponseResultSize(3);
+	    
 	  } 
 	  
 	  private Customer persistTestRecord(Customer customerIn) throws IOException, ServletException {
@@ -197,14 +241,6 @@ public class CustomerServletTest {
 		  when(response.getWriter()).thenReturn(new PrintWriter(outputStringWriter));
 		  when(request.getPathInfo()).thenReturn("/");
 		  injectParams(request,params);
-		  /*
-		  if (params != null) {
-			  Iterator<String> it = params.keySet().iterator();
-			  while (it.hasNext()) {
-				  String key = it.next();
-				  when(request.getParameter(key)).thenReturn(params.get(key));
-			  }
-		  }*/ 
 		  customerServlet.doGet(request, response);
 		  return  (new JsonParser()).parse(outputStringWriter.toString()).getAsJsonArray(); 	  
 	  }

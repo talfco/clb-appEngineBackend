@@ -17,4 +17,4 @@ temp-testng-customsuite.xml
 test-output
 .externalToolBuilders
 *~
-WEB-INF/appengine-generated/*
+WEB-INF/appengine-generated/datastore-indexes-auto.xml

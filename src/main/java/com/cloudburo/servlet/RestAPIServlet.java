@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.Vector;
 import java.util.logging.Level;
@@ -50,6 +52,7 @@ public abstract class RestAPIServlet extends HttpServlet {
 	
 	private String fields=null;
 	private String filter=null;
+	private String set=null;
 	
 	protected class MetaRecord {
 		String _cursor;
@@ -73,6 +76,7 @@ public abstract class RestAPIServlet extends HttpServlet {
 		logger.log(Level.FINER, "Call with following path {0}", req.getPathInfo());
 		fields= req.getParameter("fields");
 		filter= req.getParameter("filter");
+		set=req.getParameter("set");
 		logger.log(Level.INFO, "Field parameter {0}", fields);
 		logger.log(Level.INFO, "Filter parameter {0}", filter);
 		logger.log(Level.INFO, "Going to fetch {0} objects", getPersistencyClass().getName());
@@ -113,8 +117,53 @@ public abstract class RestAPIServlet extends HttpServlet {
 	
 	@SuppressWarnings({ "unchecked", "rawtypes", "static-access" })
 	private void getCollection(Class clazz, HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		resp.setContentType("application/json");
+		// We got a list of identifiers
+		if (set != null) {
+			logger.log(Level.INFO, "Set  String {0}",  set);
+			StringTokenizer tok = new StringTokenizer(set,",");
+			Vector vec = new Vector();
+			StringBuffer buf = new StringBuffer("[");
+			while (tok.hasMoreTokens()) vec.add(Long.parseLong(tok.nextToken()));
+			Iterator mapIt = ofy().load().type(clazz).ids(vec).values().iterator();
+			while (mapIt.hasNext()) {
+				if (fields == null)
+					buf.append((new GsonWrapper()).getGson().toJson(mapIt.next()));
+				else 
+					buf.append(getPartialResponse(fields,mapIt.next()));
+				if (mapIt.hasNext()) buf.append(",");
+			}
+			buf.append("]");
+			logger.log(Level.INFO, "Returning JSON {0}",  buf.toString());
+			resp.getWriter().print(buf.toString());
+			return;
+		}
+		
 		StringBuffer buf = new StringBuffer("[");
-		Query<?> query = ofy().load().type(clazz).limit(sResponseLimit);
+		Query<?> query;
+		// The full query
+		query = ofy().load().type(clazz).limit(sResponseLimit);
+		if (filter != null) {
+			String likeStr = "";
+			if (filter.contains("_option")) likeStr = " >=";
+			logger.log(Level.INFO, "Filter Like String {0}",  likeStr);
+			StringTokenizer tok = new StringTokenizer(filter,",");
+			
+			while (tok.hasMoreTokens()) {
+				StringTokenizer tok1 = new StringTokenizer(tok.nextToken(),":");
+				if (tok1.countTokens()!=2) {
+					resp.sendError(resp.SC_BAD_REQUEST, errorMsg(
+							"Bad Request Query Parameter provided to the API, 'filter' parameter must be of format <name>:<value>", 
+							"0003",""));
+					return;
+				}
+				String name = tok1.nextToken();
+				String value=tok1.nextToken();
+				logger.log(Level.INFO, "Filter Attributes {0}",  name+"/"+value);
+				if (!name.endsWith("_option")) 
+					query = query.filter(name+likeStr, value);
+			}
+		}
 		String cursorStr = req.getParameter("cursor");
 		if (cursorStr != null) 
 			query = query.startAt(Cursor.fromWebSafeString(cursorStr));
@@ -128,18 +177,15 @@ public abstract class RestAPIServlet extends HttpServlet {
 			} else {
 				Object obj = iterator.next();
 				try {
-					buf.append(partialResponse(fields,obj));
+					buf.append(getPartialResponse(fields,obj));
 				    buf.append(",");
 				} catch (Exception e) {
-					resp.sendError(resp.SC_BAD_REQUEST);
-					resp.getWriter().print(errorMsg(e.getMessage(),"0","0"));
+					resp.sendError(resp.SC_BAD_REQUEST,errorMsg(e.getMessage(),"0","0"));
 					return;
 					// This shouldn't happen at all IllegalAccessException
 				}
 			}
 		}
-
-		resp.setContentType("application/json");
 		String cursor="";
 		if (nrRec==sResponseLimit) {
 			cursor = iterator.getCursor().toWebSafeString();
@@ -169,10 +215,10 @@ public abstract class RestAPIServlet extends HttpServlet {
 					resp.getWriter().print((new GsonWrapper()).getGson().toJson(businessObj));
 				else
 					try {
-						resp.getWriter().print(partialResponse(fields,businessObj));
+						resp.getWriter().print(getPartialResponse(fields,businessObj));
 					} catch (Exception e) {
-						resp.sendError(resp.SC_BAD_REQUEST);
-						resp.getWriter().print(errorMsg(e.getMessage(),"0","0"));
+						resp.sendError(resp.SC_BAD_REQUEST, errorMsg(e.getMessage(),"0","0"));
+						return;
 						// This shouldn't happen at all IllegalAccessException
 					}
 			}
@@ -195,23 +241,27 @@ public abstract class RestAPIServlet extends HttpServlet {
 		return buf.toString();
 	}
 	
-	private String partialResponse(String filterList, Object elem) throws Exception  {
-		Vector<String> fieldVec = new Vector<String>();
-		StringTokenizer tok = new StringTokenizer(filterList,",");
-		while (tok.hasMoreTokens()) fieldVec.add(tok.nextToken());
-		Field[] fields = elem.getClass().getDeclaredFields();
-		StringBuffer buf = new StringBuffer("{");
-		for (int i=0; i< fields.length; i++) {
-			if (fieldVec.indexOf(fields[i].getName()) >= 0) {
-				logger.log(Level.INFO, "Adding Field {0}",fields[i].getName()); 
-				Object value = fields[i].get(elem);
-				buf.append("\""+fields[i].getName()+"\""+":"+(new GsonWrapper()).getGson().toJson(value));
-				buf.append(",\n");
-			} 
+	private String getPartialResponse(String filterList, Object elem)   {
+		try {
+			Vector<String> fieldVec = new Vector<String>();
+			StringTokenizer tok = new StringTokenizer(filterList,",");
+			while (tok.hasMoreTokens()) fieldVec.add(tok.nextToken());
+			Field[] fields = elem.getClass().getDeclaredFields();
+			StringBuffer buf = new StringBuffer("{");
+			for (int i=0; i< fields.length; i++) {
+				if (fieldVec.indexOf(fields[i].getName()) >= 0) {
+					logger.log(Level.INFO, "Adding Field {0}",fields[i].getName()); 
+					Object value = fields[i].get(elem);
+					buf.append("\""+fields[i].getName()+"\""+":"+(new GsonWrapper()).getGson().toJson(value));
+					buf.append(",");
+				} 
+			}
+			buf.replace(buf.length()-1, buf.length(), "");
+			buf.append("}");
+			logger.log(Level.INFO, "Returning JSON {0}",buf.toString()); 
+			return buf.toString();
+		} catch (IllegalAccessException ex) {
+			return errorMsg("Illlegal AccessException shouldn't happen",ex.getMessage(),"");
 		}
-		buf.replace(buf.length()-2, buf.length()-1, "");
-		buf.append("}");
-		logger.log(Level.INFO, "Returning JSON {0}",buf.toString()); 
-		return buf.toString();
 	}
 }
