@@ -23,7 +23,6 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.Vector;
 import java.util.logging.Level;
@@ -145,7 +144,8 @@ public abstract class RestAPIServlet extends HttpServlet {
 		query = ofy().load().type(clazz).limit(sResponseLimit);
 		if (filter != null) {
 			String likeStr = "";
-			if (filter.contains("_option")) likeStr = " >=";
+			boolean optionUsed = filter.contains("_option");
+			if (optionUsed) likeStr = " >=";
 			logger.log(Level.INFO, "Filter Like String {0}",  likeStr);
 			StringTokenizer tok = new StringTokenizer(filter,",");
 			
@@ -159,10 +159,22 @@ public abstract class RestAPIServlet extends HttpServlet {
 				}
 				String name = tok1.nextToken();
 				String value=tok1.nextToken();
-				logger.log(Level.INFO, "Filter Attributes {0}",  name+"/"+value);
-				if (!name.endsWith("_option")) 
+				String uppervalue = "";
+				for (int i=0; i< value.length();i++) {
+					char ch = value.charAt(i);
+					if (i== value.length()-1) ch++;
+					uppervalue = uppervalue+ch;
+					
+				}
+				logger.log(Level.INFO, "Filter Attribute {0}",  name+"/"+value);
+				logger.log(Level.INFO, "Upper Value {0}",  uppervalue);
+				if (!name.endsWith("_option"))  {
 					query = query.filter(name+likeStr, value);
+				    if (optionUsed) query = query.filter(name+" <", uppervalue);
+				}
 			}
+			
+				
 		}
 		String cursorStr = req.getParameter("cursor");
 		if (cursorStr != null) 
