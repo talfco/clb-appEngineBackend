@@ -217,7 +217,14 @@ public class CustomerServletTest {
 		array = getTestCollection(hash);
 		assertEquals("Checking received numbers of JSON Elements (3 record )", 3,array.size());
 		
+		// TEST: Parameter for index attributes
+		
 		CustomerServlet.setResponseResultSize(3);
+		hash = new Hashtable<String, String>();
+		hash.put("indexAttributes","1");
+		array = getTestCollection(hash);
+	    assertEquals("Checking received numbers of JSON Elements (3 index attributes)", 3,array.size());
+	    
 	    
 	  } 
 	  

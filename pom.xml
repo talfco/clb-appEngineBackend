@@ -8,12 +8,36 @@
         <appengine.target.version>1.8.7</appengine.target.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+    <!--  
     <distributionManagement>  
   		<repository>    
   			<id>gh-pages</id>    
   			<url>file:///${basedir}/../clb-appEngineBackend-pages/repository/</url>  
   		</repository>
-  	</distributionManagement>
+  	</distributionManagement> -->
+ 	<pluginRepositories>
+  		<pluginRepository>
+    		<id>synergian-repo</id>
+    		<url>https://raw.github.com/synergian/wagon-git/releases</url>
+  		</pluginRepository>
+	</pluginRepositories>
+	<distributionManagement>
+  		<repository>
+    		<id>clb-mvnrelease</id>
+    		<name>Cloudburo Github Maven Release</name>
+        	<url>git:releases://git@github.com:talfco/clb_mvnrepo.git</url>
+  		</repository>
+  		<snapshotRepository>
+    		<id>clb-mvnsnapshot</id>
+    		<name>Cloudburo Github Maven Snapshot</name>
+        	<url>git:snapshots://git@github.com:talfco/clb_mvnrepo.git</url>
+  		</snapshotRepository>
+  		<site>
+    		<id>clb-mvnsite</id>
+    		<name>Cloudburo Github Maven Site</name>
+        	<url>git:site://git@github.com:talfco/clb_mvnrepo.git</url>
+  		</site>  
+	</distributionManagement>
     <dependencies>
         <!-- Compile/runtime dependencies -->
         <dependency>
@@ -74,6 +98,13 @@
         </dependency>        
     </dependencies>
     <build>
+       <extensions>
+  			<extension>
+    			<groupId>ar.com.synergian</groupId>
+        		<artifactId>wagon-git</artifactId>
+        		<version>0.2.1</version>
+  			</extension>
+  		</extensions>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

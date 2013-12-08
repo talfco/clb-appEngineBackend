@@ -19,6 +19,7 @@ package com.cloudburo.servlet;
 
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,6 +38,8 @@ import com.google.appengine.api.datastore.Cursor;
 import com.google.appengine.api.datastore.QueryResultIterator;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Objectify;
+import com.googlecode.objectify.annotation.Id;
+import com.googlecode.objectify.annotation.Index;
 import com.googlecode.objectify.cmd.Query;
 
 /**
@@ -52,6 +55,7 @@ public abstract class RestAPIServlet extends HttpServlet {
 	private String fields=null;
 	private String filter=null;
 	private String set=null;
+	private String indexAttributes = null;
 	
 	protected class MetaRecord {
 		String _cursor;
@@ -75,6 +79,7 @@ public abstract class RestAPIServlet extends HttpServlet {
 		logger.log(Level.FINER, "Call with following path {0}", req.getPathInfo());
 		fields= req.getParameter("fields");
 		filter= req.getParameter("filter");
+		indexAttributes = req.getParameter("indexAttributes");
 		set=req.getParameter("set");
 		logger.log(Level.INFO, "Field parameter {0}", fields);
 		logger.log(Level.INFO, "Filter parameter {0}", filter);
@@ -136,8 +141,24 @@ public abstract class RestAPIServlet extends HttpServlet {
 			logger.log(Level.INFO, "Returning JSON {0}",  buf.toString());
 			resp.getWriter().print(buf.toString());
 			return;
+		} else if (indexAttributes != null) {
+			Field[] fields = clazz.getDeclaredFields();
+			StringBuffer buf = new StringBuffer("[");
+			boolean first = true;
+			for(Field field : fields) {
+				Annotation[] annotations = field.getAnnotations();
+				for(Annotation annotation : annotations){
+					if (annotation instanceof Index) {
+						if (!first) buf.append(",");  else first = false;
+						buf.append(field.getName());
+					}
+				}
+			}
+			buf.append("]");
+			logger.log(Level.INFO, "Returning Index Attributes JSON {0}",  buf.toString());
+			resp.getWriter().print(buf.toString());
+			return;
 		}
-		
 		StringBuffer buf = new StringBuffer("[");
 		Query<?> query;
 		// The full query
