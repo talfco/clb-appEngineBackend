@@ -94,8 +94,8 @@ public abstract class RestAPIServlet extends HttpServlet {
 	@SuppressWarnings("unchecked")
 	protected void doPut(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
-		logger.log(Level.INFO, "Updating Customer");
 		Object obj = (new GsonWrapper()).getGson().fromJson(req.getReader(),getPersistencyClass());
+		logger.log(Level.INFO, "Updating "+obj.getClass().getName());
 		ofy().save().entity(obj).now();
 		//logger.log(Level.INFO, "Persisted Customer with id {0}",customer._id);
 		resp.getWriter().print((new GsonWrapper()).getGson().toJson(obj));
@@ -104,8 +104,8 @@ public abstract class RestAPIServlet extends HttpServlet {
 	@SuppressWarnings("unchecked")
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
-		logger.log(Level.INFO, "Creating Customer");
 		Object obj = (new GsonWrapper()).getGson().fromJson(req.getReader(),getPersistencyClass());
+		logger.log(Level.INFO, "Creating "+obj.getClass().getName());
 		ofy().save().entity(obj).now();
 		//logger.log(Level.INFO, "Persisted Customer with id {0}",customer._id);
 		resp.getWriter().print((new GsonWrapper()).getGson().toJson(obj));
@@ -241,7 +241,7 @@ public abstract class RestAPIServlet extends HttpServlet {
 		// This must be the identifier
 		if (tok.countTokens() == 1) {
 			Key<?> key = Key.create(clazz, Long.parseLong(tok.nextToken()));
-			logger.log(Level.INFO, "Going to get customer {0}", key);
+			logger.log(Level.INFO, "Going to get object {0}", key);
 			Object businessObj = ofy().load().type(clazz).filterKey(key).first().now();
 			if (businessObj != null) {
 				if (fields == null || fields.equals(""))

@@ -26,11 +26,14 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+import com.googlecode.objectify.Key;
 
 import java.lang.reflect.Type;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.StringTokenizer;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.joda.time.DateTime;
@@ -89,12 +92,41 @@ public class GsonWrapper {
 			 return dt;
 		  }
 	}
+
+	 @SuppressWarnings("rawtypes")
+	 public static class KeyAdapterSerializer implements JsonSerializer<Key>, JsonDeserializer<Key>  {
+	   
+	   @Override
+	   public JsonElement serialize(Key key, Type type, JsonSerializationContext serialContext) {
+	     logger.log(Level.INFO,"Serialize "+key);
+	     if (key.getId() == 0)
+	       return new JsonPrimitive(key.getName());
+	     else
+	       return new JsonPrimitive(key.getId());
+	   }
+	   
+	   @SuppressWarnings("unchecked")
+	   @Override
+	   public Key deserialize(JsonElement element, Type type,  JsonDeserializationContext deserialContext) throws JsonParseException {
+		 logger.log(Level.INFO,"Deserizalize "+element.getAsString());
+		 StringTokenizer tok = new StringTokenizer(element.getAsString(),";");
+		 String className = tok.nextToken();
+		 className = className.substring(0,1).toUpperCase()+className.substring(1);
+		 Long id = Long.parseLong(tok.nextToken());
+		 try {
+		 Class clazz = Class.forName("com.cloudburo.entity."+className);
+		 return Key.create(clazz,id);
+		 } catch (Exception e) { e.printStackTrace(); }
+	     return null;
+	   }
+	 }
     
     public GsonWrapper() {
     	gsonBuilder = new GsonBuilder();
     	gsonBuilder.registerTypeAdapter(DateTime.class, new DateTimeTypeConverter());
     	gsonBuilder.registerTypeAdapter(LocalDateTime.class, new LocalDateTimeTypeConverter());
     	gsonBuilder.registerTypeAdapter(Date.class, new DateTypeConverter());
+    	gsonBuilder.registerTypeAdapter(Key.class, new KeyAdapterSerializer());
     	gson = gsonBuilder.create();
     }
     
