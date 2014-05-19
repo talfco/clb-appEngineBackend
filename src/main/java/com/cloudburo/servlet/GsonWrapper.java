@@ -28,6 +28,7 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.googlecode.objectify.Key;
 
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -43,7 +44,6 @@ import org.joda.time.format.ISODateTimeFormat;
 
 public class GsonWrapper {
 	
-	@SuppressWarnings("unused")
 	private static final Logger logger = Logger.getLogger(GsonWrapper.class.getCanonicalName());
 	private GsonBuilder gsonBuilder;
 	private Gson gson;
@@ -98,7 +98,9 @@ public class GsonWrapper {
 	   
 	   @Override
 	   public JsonElement serialize(Key key, Type type, JsonSerializationContext serialContext) {
-	     logger.log(Level.INFO,"Serialize "+key);
+	     Type[] typeParameters = ((ParameterizedType)type).getActualTypeArguments();
+	     Type idType = typeParameters[0]; // Id has only one parameterized type T
+	     logger.log(Level.INFO,"Serialize "+key+"->"+idType);
 	     if (key.getId() == 0)
 	       return new JsonPrimitive(key.getName());
 	     else
@@ -108,19 +110,27 @@ public class GsonWrapper {
 	   @SuppressWarnings("unchecked")
 	   @Override
 	   public Key deserialize(JsonElement element, Type type,  JsonDeserializationContext deserialContext) throws JsonParseException {
-		 logger.log(Level.INFO,"Deserizalize "+element.getAsString());
-		 StringTokenizer tok = new StringTokenizer(element.getAsString(),";");
-		 String className = tok.nextToken();
-		 className = className.substring(0,1).toUpperCase()+className.substring(1);
-		 Long id = Long.parseLong(tok.nextToken());
-		 try {
-		 Class clazz = Class.forName("com.cloudburo.entity."+className);
-		 return Key.create(clazz,id);
-		 } catch (Exception e) { e.printStackTrace(); }
-	     return null;
-	   }
-	 }
-    
+		StringTokenizer tok = new StringTokenizer(element.getAsString(),";");
+	    String className = ((ParameterizedType)type).getActualTypeArguments()[0].toString(); 
+	    if (className.startsWith("class ")) { className = className.substring("class ".length()); }
+	    logger.log(Level.INFO,"Deserizalize Objectify key:"+element.getAsString()+" "+className);
+	    try {
+	       Class clazz = Class.forName(className.toString());
+		 	if (tok.countTokens() > 0) 
+		 	{
+			 String parentKey = tok.nextToken();
+			 // TODO We have to include here the parent !!!
+			 return Key.create(clazz,Long.parseLong(element.getAsString()));
+		 	}
+		 	else {
+			 return Key.create(clazz,Long.parseLong(element.getAsString())); 
+		 	}
+        } catch (Exception e) {
+	    	 throw new JsonParseException("ObjectifKey conversion failed "+e.getMessage());
+	    }
+	  }		  
+    }
+
     public GsonWrapper() {
     	gsonBuilder = new GsonBuilder();
     	gsonBuilder.registerTypeAdapter(DateTime.class, new DateTimeTypeConverter());
