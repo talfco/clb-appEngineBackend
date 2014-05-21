@@ -76,6 +76,8 @@ public abstract class RestAPIServlet extends HttpServlet {
 	
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException, ServletException {
+		req.setCharacterEncoding("UTF-8");
+		resp.setCharacterEncoding("UTF-8");
 		logger.log(Level.FINER, "Call with following path {0}", req.getPathInfo());
 		fields= req.getParameter("fields");
 		filter= req.getParameter("filter");
@@ -94,8 +96,10 @@ public abstract class RestAPIServlet extends HttpServlet {
 	@SuppressWarnings("unchecked")
 	protected void doPut(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
+		req.setCharacterEncoding("UTF-8");
+		resp.setCharacterEncoding("UTF-8");
 		Object obj = (new GsonWrapper()).getGson().fromJson(req.getReader(),getPersistencyClass());
-		logger.log(Level.INFO, "Updating "+obj.getClass().getName());
+		logger.log(Level.INFO, "Updating "+obj.getClass().getName()+" "+req.getCharacterEncoding());
 		ofy().save().entity(obj).now();
 		//logger.log(Level.INFO, "Persisted Customer with id {0}",customer._id);
 		resp.getWriter().print((new GsonWrapper()).getGson().toJson(obj));
@@ -104,6 +108,8 @@ public abstract class RestAPIServlet extends HttpServlet {
 	@SuppressWarnings("unchecked")
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
+		req.setCharacterEncoding("UTF-8");
+		resp.setCharacterEncoding("UTF-8");
 		Object obj = (new GsonWrapper()).getGson().fromJson(req.getReader(),getPersistencyClass());
 		logger.log(Level.INFO, "Creating "+obj.getClass().getName());
 		ofy().save().entity(obj).now();
@@ -114,6 +120,8 @@ public abstract class RestAPIServlet extends HttpServlet {
 	@SuppressWarnings("unchecked")
 	protected void doDelete(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
+		req.setCharacterEncoding("UTF-8");
+		resp.setCharacterEncoding("UTF-8");
 		Key<?> objectKey = Key.create(getPersistencyClass(), Long.parseLong(req.getPathInfo().substring(1)));
 		logger.log(Level.INFO, "Deleting object with identifier {0}",  objectKey);
 		ofy().delete().key(objectKey).now();
@@ -121,6 +129,8 @@ public abstract class RestAPIServlet extends HttpServlet {
 	
 	@SuppressWarnings({ "unchecked", "rawtypes", "static-access" })
 	private void getCollection(Class clazz, HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		req.setCharacterEncoding("UTF-8");
+		resp.setCharacterEncoding("UTF-8");
 		resp.setContentType("application/json");
 		// We got a list of identifiers
 		if (set != null) {
@@ -237,6 +247,8 @@ public abstract class RestAPIServlet extends HttpServlet {
 	
 	@SuppressWarnings({ "rawtypes", "unchecked", "static-access" })
 	private void getObject(Class clazz, HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		req.setCharacterEncoding("UTF-8");
+		resp.setCharacterEncoding("UTF-8");
 		StringTokenizer tok = new StringTokenizer(req.getPathInfo(),"/");
 		// This must be the identifier
 		if (tok.countTokens() == 1) {
