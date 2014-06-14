@@ -23,6 +23,7 @@ import com.googlecode.objectify.annotation.Index;
 
 import java.util.Date;
 import org.joda.time.LocalDateTime;
+import org.joda.time.DateTime;
 
 @Entity
 public class Customer {
@@ -35,6 +36,7 @@ public class Customer {
 	public String location;
 	public Date date;
 	public LocalDateTime date1;
+	public DateTime date2;	
 	public String telephone;
 	public String birthdate;
 	public String citizenship;

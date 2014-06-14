@@ -19,7 +19,7 @@ package com.cloudburo.entity;
 
 import com.googlecode.objectify.Objectify;
 import com.googlecode.objectify.ObjectifyService;
-
+import com.googlecode.objectify.impl.translate.opt.joda.JodaTimeTranslators;
 import com.cloudburo.servlet.OfyService;
 
 /**
@@ -27,6 +27,7 @@ import com.cloudburo.servlet.OfyService;
  */
 public class MyOfyService extends OfyService {
 	static {
+		JodaTimeTranslators.add(ObjectifyService.factory());
 		ObjectifyService.factory().register(Customer.class);
     }	
 	/** Mandatory to override the method **/

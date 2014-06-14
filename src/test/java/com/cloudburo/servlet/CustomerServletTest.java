@@ -31,11 +31,11 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import org.joda.time.DateTime;
 import org.joda.time.LocalDateTime;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -88,12 +88,14 @@ public class CustomerServletTest {
 
 		Date inDate = new Date();
 		LocalDateTime in1Date = new LocalDateTime();
+		DateTime in2Date = new DateTime();
 	    // A customer object test entry
 	    Customer customerIn = new Customer();
 	    customerIn.name = "Felix";
 	    customerIn.address = "Test";
 	    customerIn.date = inDate;
 	    customerIn.date1 = in1Date;
+	    customerIn.date2 = in2Date;
 
 	    // TEST: Check the persistence operations "POST"
 	    Customer customerOut =  persistTestRecord(customerIn); 
@@ -112,9 +114,12 @@ public class CustomerServletTest {
 	    customerOut =  getTestRecord(customerOut._id,null);
 	    assertEquals("Checking Name", customerOut.name, customerIn.name);
 	    assertEquals("Checking Surname", customerOut.surname, customerIn.surname);
+	    // 2014-06-14T15:17:20.262Z
 	    assertEquals("Checking Date", customerOut.date,inDate);
+	    // 2014-06-14T17:17:20.320
 	    assertEquals("Checking Joda DateTime", customerOut.date1,in1Date);
-	    
+	    // 
+	    assertEquals("Checking Joda DateTime", customerOut.date2,in2Date);	    
 	    // TEST: Going to delete the entry "DELETE"
 	    StringWriter outputStringWriter = new StringWriter();
 	    when(request.getPathInfo()).thenReturn("/"+customerOut._id);
