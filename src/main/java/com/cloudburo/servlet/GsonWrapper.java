@@ -48,6 +48,7 @@ public class GsonWrapper {
 	private GsonBuilder gsonBuilder;
 	private Gson gson;
 	
+	// DateTime format like: 2014-06-14T18:42:34.060+02:00
 	private class DateTimeTypeConverter implements JsonSerializer<DateTime>, JsonDeserializer<DateTime> {
 
 		  public JsonElement serialize(DateTime src, Type srcType, JsonSerializationContext context) {
@@ -59,6 +60,7 @@ public class GsonWrapper {
 		  }
 	}
 	
+	// DateTime format like: 2014-06-14T18:42:34.018 
 	private class LocalDateTimeTypeConverter implements JsonSerializer<LocalDateTime>, JsonDeserializer<LocalDateTime> {
 
 		  public JsonElement serialize(LocalDateTime src, Type srcType, JsonSerializationContext context) {
@@ -72,6 +74,7 @@ public class GsonWrapper {
 		  }
 	}
 	
+	// This will handle the ISO8601 GMT date format - 2014-06-14T16:42:33.970Z
 	private class DateTypeConverter implements JsonSerializer<Date>, JsonDeserializer<Date> {
 
 		  public JsonElement serialize(Date src, Type srcType, JsonSerializationContext context) {

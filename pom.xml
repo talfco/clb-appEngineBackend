@@ -8,13 +8,6 @@
         <appengine.target.version>1.9.2</appengine.target.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
-    <!--  
-    <distributionManagement>  
-  		<repository>    
-  			<id>gh-pages</id>    
-  			<url>file:///${basedir}/../clb-appEngineBackend-pages/repository/</url>  
-  		</repository>
-  	</distributionManagement> -->
  	<pluginRepositories>
   		<pluginRepository>
     		<id>synergian-repo</id>
@@ -115,7 +108,6 @@
                     <target>1.6</target>
                 </configuration>
             </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
