@@ -10,11 +10,7 @@ test-output/
 /atlassian-ide-plugin.xml
 .idea
 .DS_Store
-.classpath
-.settings
-.project
 temp-testng-customsuite.xml
 test-output
-.externalToolBuilders
 *~
 WEB-INF/appengine-generated/datastore-indexes-auto.xml
